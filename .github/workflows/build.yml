@@ -12,7 +12,7 @@ jobs:
           - service: nginx
             dockerfile: ./nginx/Dockerfile
             context: ./nginx
-            image: ${{ secrets.DOCKER_USERNAME }}/nginx
+            image: kacperfix/nginx
           - service: php
             dockerfile: ./html/Dockerfile
             context: ./html
