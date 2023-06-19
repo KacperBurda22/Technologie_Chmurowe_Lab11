@@ -1,32 +1,60 @@
 name: Build and Push Images
-
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        arch: [amd64, arm64]
+        include:
+          - dockerfile: ./nginx/Dockerfile
+            context: ./nginx
+            image: ${{ secrets.DOCKER_USERNAME }}/nginx
+          - dockerfile: ./php/Dockerfile
+            context: ./html
+            image: ${{ secrets.DOCKER_USERNAME }}/html
+          - dockerfile: ./mysql/Dockerfile
+            context: ./mysql
+            image: ${{ secrets.DOCKER_USERNAME }}/mysql
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+      - name: Checkout source code
+        uses: actions/checkout@v3
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
-
-      - name: Set up Docker Buildx
+      - name: Set up Buildx
         uses: docker/setup-buildx-action@v1
 
-      - name: Build and push images
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push
         run: |
-          echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
-          docker buildx build --platform ${{ matrix.arch }} -t $DOCKER_USERNAME/lemp:${{ matrix.arch }} .
-          docker push $DOCKER_USERNAME/lemp:${{ matrix.arch }}
+          docker buildx build --platform ${{ matrix.arch }} -t ${{ matrix.image }} -f ${{ matrix.dockerfile }} .
+          docker push ${{ matrix.image }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Generate deployment package
+        run: zip deploy.zip ./docker-compose.yml
+
+      - name: Deploy to EBS
+        uses: einaregilsson/beanstalk-deploy@v21
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: multifib
+          environment_name: Multifib-env
+          version_label: test0
+          region: us-east-1
+          deployment_package: deploy.zip
