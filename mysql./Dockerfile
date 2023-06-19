@@ -1,5 +1,8 @@
-FROM phpmyadmin/phpmyadmin:latest
-ENV PMA_HOST=mysql
+FROM mysql:latest
 ENV MYSQL_ROOT_PASSWORD=secret
-COPY --from=phpmyadmin/phpmyadmin /usr/src/phpmyadmin /var/www/html
+ENV MYSQL_DATABASE=test
+ENV MYSQL_USER=user
+ENV MYSQL_PASSWORD=password
+COPY ./mysql /var/lib/mysql
+
 

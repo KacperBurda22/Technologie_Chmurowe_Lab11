@@ -12,7 +12,7 @@ jobs:
           - dockerfile: ./nginx/Dockerfile
             context: ./nginx
             image: ${{ secrets.DOCKER_USERNAME }}/nginx
-          - dockerfile: ./php/Dockerfile
+          - dockerfile: ./html/Dockerfile
             context: ./html
             image: ${{ secrets.DOCKER_USERNAME }}/html
           - dockerfile: ./mysql/Dockerfile
