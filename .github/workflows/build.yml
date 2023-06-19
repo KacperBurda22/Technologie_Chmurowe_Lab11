@@ -16,11 +16,11 @@ jobs:
           - service: php
             dockerfile: ./html/Dockerfile
             context: ./html
-            image: ${{ secrets.DOCKER_USERNAME }}/html
+            image: kacperfix/html
           - service: mysql
             dockerfile: ./mysql/Dockerfile
             context: ./mysql
-            image: ${{ secrets.DOCKER_USERNAME }}/mysql
+            image: kacperfix/mysql
 
     steps:
       - name: Checkout source code
